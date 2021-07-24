@@ -20,7 +20,9 @@
             android:id="@+id/question_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/how_are_you_travelling_today"/>
+            android:fontFamily="@font/poppins_light"
+            android:text="@string/how_are_you_travelling_today"
+            android:textStyle="bold"/>
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -28,19 +30,32 @@
             android:orientation="horizontal">
 
             <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
                 android:layout_margin="10dp"
-                android:src="@drawable/ic_baseline_directions_bike_24" />
+                android:padding="8dp"
+                android:background="@drawable/ic_circle_background"
+                android:src="@drawable/ic_baseline_directions_bike_white" />
 
             <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="70dp"
+                android:layout_height="70dp"
                 android:layout_margin="10dp"
-                android:src="@drawable/ic_baseline_directions_walk_24" />
+                android:padding="8dp"
+                android:background="@drawable/ic_circle_background"
+                android:src="@drawable/ic_baseline_directions_walk_white" />
 
         </LinearLayout>
 
     </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Made with ❤️ by gismo"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="5dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
