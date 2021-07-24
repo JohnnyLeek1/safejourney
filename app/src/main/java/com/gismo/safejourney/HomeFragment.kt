@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.gismo.safejourney.databinding.FragmentHomeBinding
 
 class HomeFragment: Fragment() {
@@ -16,6 +17,14 @@ class HomeFragment: Fragment() {
 
         val binding = FragmentHomeBinding.inflate(inflater, container, false)
         binding.lifecycleOwner = viewLifecycleOwner
+
+        binding.startBikeJourney.setOnClickListener {
+            findNavController().navigate(HomeFragmentDirections.startNavAction())
+        }
+
+        binding.startWalkJourney.setOnClickListener {
+            findNavController().navigate(HomeFragmentDirections.startNavAction())
+        }
 
         return binding.root
     }

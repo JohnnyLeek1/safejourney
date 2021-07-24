@@ -10,6 +10,21 @@
         android:name="com.gismo.safejourney.HomeFragment"
         android:label="@string/app_name"
         tools:layout="@layout/fragment_home">
+
+        <action
+            android:id="@+id/start_nav_action"
+            app:destination="@id/map_dest">
+        </action>
+
     </fragment>
+
+    <fragment
+        android:id="@+id/map_dest"
+        android:name="com.gismo.safejourney.MapFragment"
+        android:label="@string/app_name"
+        tools:layout="@layout/fragment_map">
+
+    </fragment>
+
 
 </navigation>
