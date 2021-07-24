@@ -6,7 +6,7 @@ import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 
 /**
- * created by gismo
+ * created by gismo :)
  */
 class MainActivity : AppCompatActivity() {
 

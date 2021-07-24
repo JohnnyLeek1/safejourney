@@ -19,10 +19,12 @@ class HomeFragment: Fragment() {
         binding.lifecycleOwner = viewLifecycleOwner
 
         binding.startBikeJourney.setOnClickListener {
+            binding.startBikeJourney.setBackgroundResource(R.drawable.ic_circle_shadow)
             findNavController().navigate(HomeFragmentDirections.startNavAction())
         }
 
         binding.startWalkJourney.setOnClickListener {
+            binding.startWalkJourney.setBackgroundResource(R.drawable.ic_circle_shadow)
             findNavController().navigate(HomeFragmentDirections.startNavAction())
         }
 
