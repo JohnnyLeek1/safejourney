@@ -2,6 +2,9 @@ package com.gismo.safejourney
 
 import android.graphics.Color
 import android.util.Log
+import android.view.View
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.esri.arcgisruntime.ArcGISRuntimeEnvironment
 import com.esri.arcgisruntime.geometry.Point
@@ -37,6 +40,9 @@ class MapViewModel(): ViewModel() {
         LocatorTask("https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer")
     }
 
+    private var _routeFound = MutableLiveData<Boolean>(false)
+    val routeFound: LiveData<Boolean> get() = _routeFound
+
     private val graphicsOverlay: GraphicsOverlay = GraphicsOverlay()
 
     var mapView by Delegates.observable<MapView?>(null) { _, oldValue, newValue ->
@@ -58,22 +64,19 @@ class MapViewModel(): ViewModel() {
     fun findRoute(destination: Point) {
 
         Log.i(TAG, "Finding route...")
-        Log.i(TAG, "Route task? ${routeTask != null}")
         routeTask?.loadAsync()
         routeTask?.addDoneLoadingListener {
             if(routeTask?.loadStatus == LoadStatus.LOADED) {
                 val routeParametersFuture = routeTask?.createDefaultParametersAsync()
                 Log.i(TAG, "$routeParametersFuture")
                 routeParametersFuture?.addDoneListener {
-                    Log.i(TAG, "1")
                     routeParametersFuture.get()
                     // Define route parameters
                     val routeParameters = routeParametersFuture?.get().apply {
-                        Log.i(TAG, "2")
                         try {
                             setStops(
                                 listOf(
-                                    Stop(Point(-85.5396562, 42.8106865)),
+                                    Stop(mapView?.locationDisplay?.mapLocation),
                                     Stop(destination)
                                 )
                             )
@@ -81,6 +84,7 @@ class MapViewModel(): ViewModel() {
                             isReturnDirections = true
                             isReturnStops = true
                             isReturnRoutes = true
+
                         } catch (e: Exception) {
                             when (e) {
                                 is InterruptedException, is ExecutionException -> {
@@ -98,6 +102,8 @@ class MapViewModel(): ViewModel() {
                         try {
                             val routeResult = routeResultFuture?.get()
                             val routeGeometry = routeResult.routes[0].routeGeometry
+
+                            _routeFound.value = true
 
                             val routeGraphic = Graphic(
                                 routeGeometry,

@@ -36,6 +36,7 @@ class MapFragment: Fragment() {
 
     private val addressGeocodeParameters = GeocodeParameters()
 
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -61,6 +62,11 @@ class MapFragment: Fragment() {
         viewModel.routeTask = RouteTask(this.requireContext(), getString(R.string.world_route_url))
 
         binding.recenterButton.setOnClickListener { viewModel.recenterLocation() }
+
+        viewModel.routeFound.observe(viewLifecycleOwner) {
+            if(it) binding.startButton.visibility = View.VISIBLE
+            else binding.startButton.visibility = View.GONE
+        }
 
         // Set context so it can be accessed in geocoder
         mapContext = this.requireContext()
