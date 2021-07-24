@@ -7,8 +7,13 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.esri.arcgisruntime.ArcGISRuntimeEnvironment
+import com.esri.arcgisruntime.concurrent.ListenableFuture
+import com.esri.arcgisruntime.data.FeatureQueryResult
+import com.esri.arcgisruntime.data.QueryParameters
+import com.esri.arcgisruntime.data.ServiceFeatureTable
 import com.esri.arcgisruntime.geometry.Point
 import com.esri.arcgisruntime.geometry.SpatialReferences
+import com.esri.arcgisruntime.layers.FeatureLayer
 import com.esri.arcgisruntime.loadable.LoadStatus
 import com.esri.arcgisruntime.location.SimulatedLocationDataSource
 import com.esri.arcgisruntime.location.SimulationParameters
@@ -23,10 +28,7 @@ import com.esri.arcgisruntime.navigation.RouteTracker
 import com.esri.arcgisruntime.symbology.SimpleLineSymbol
 import com.esri.arcgisruntime.symbology.SimpleMarkerSymbol
 import com.esri.arcgisruntime.tasks.geocode.LocatorTask
-import com.esri.arcgisruntime.tasks.networkanalysis.RouteParameters
-import com.esri.arcgisruntime.tasks.networkanalysis.RouteResult
-import com.esri.arcgisruntime.tasks.networkanalysis.RouteTask
-import com.esri.arcgisruntime.tasks.networkanalysis.Stop
+import com.esri.arcgisruntime.tasks.networkanalysis.*
 import java.io.File
 import java.util.*
 import java.util.concurrent.ExecutionException
@@ -36,10 +38,8 @@ class MapViewModel(): ViewModel() {
 
     private val TAG: String = "MapViewModel"
 
-    val map: ArcGISMap by lazy {
-        ArcGISMap(BasemapStyle.ARCGIS_STREETS).apply {
-            loadAsync()
-        }
+    private val map: ArcGISMap by lazy {
+        ArcGISMap(BasemapStyle.ARCGIS_STREETS)
     }
 
     val locatorTask: LocatorTask by lazy {
@@ -58,6 +58,13 @@ class MapViewModel(): ViewModel() {
 
     var routeParameters: RouteParameters? = null
     var routeResult: RouteResult? = null
+
+    // Barriers
+    private var points: MutableList<PointBarrier> = mutableListOf<PointBarrier>()
+    private val serviceFeatureTable: ServiceFeatureTable by lazy {
+        ServiceFeatureTable("https://services.arcgis.com/hRUr1F8lE8Jq2uJo/arcgis/rest/services/StTestPts/FeatureServer/0")
+    }
+
 
     var mapView by Delegates.observable<MapView?>(null) { _, oldValue, newValue ->
         // Remove graphics overlays from old map
@@ -96,6 +103,12 @@ class MapViewModel(): ViewModel() {
                             isReturnDirections = true
                             isReturnStops = true
                             isReturnRoutes = true
+
+                            val queryParams = QueryParameters()
+
+                            queryParams.whereClause = "OBJECTID >= 0"
+                            setPointBarriers(serviceFeatureTable, queryParams)
+
 
                         } catch (e: Exception) {
                             when (e) {
@@ -160,8 +173,37 @@ class MapViewModel(): ViewModel() {
         Log.i(TAG, "MapViewModel initialized")
 
         val apiKey: String = ApiKey.KEY
-        Log.i("MapFragment", "Initializing environment with API Key: $apiKey")
+        Log.i(TAG, "Initializing environment with API Key: $apiKey")
         ArcGISRuntimeEnvironment.setApiKey(apiKey)
+        Log.i(TAG, "Loading feature service")
+
+        val featureLayer = FeatureLayer(serviceFeatureTable)
+
+        // Query for all barriers
+        val query = QueryParameters()
+
+        query.whereClause = "OBJECTID > 0"
+
+        val future: ListenableFuture<FeatureQueryResult> = serviceFeatureTable.queryFeaturesAsync(query)
+        future.addDoneListener {
+            try {
+                val result = future.get()
+
+                val resultIterator = result.iterator()
+                if(resultIterator.hasNext()) {
+                    resultIterator.next().run {
+                        Log.i(TAG, "Adding point ${geometry.isEmpty}")
+                        points.add(PointBarrier(geometry as Point))
+                    }
+                }
+            } catch(e: Exception) {
+                Log.e(TAG, "Error adding points ${e.message}")
+            }
+        }
+
+
+
+        map.operationalLayers.add(featureLayer)
     }
 
     override fun onCleared() {
