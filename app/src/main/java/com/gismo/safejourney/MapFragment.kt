@@ -3,6 +3,7 @@ package com.gismo.safejourney
 import android.content.Context
 import android.content.pm.PackageManager
 import android.database.MatrixCursor
+import android.graphics.Color
 import android.os.Bundle
 import android.provider.BaseColumns
 import android.util.Log
@@ -16,13 +17,23 @@ import androidx.cursoradapter.widget.SimpleCursorAdapter
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.esri.arcgisruntime.ArcGISRuntimeEnvironment
+import com.esri.arcgisruntime.UnitSystem
 import com.esri.arcgisruntime.loadable.LoadStatus
+import com.esri.arcgisruntime.location.RouteTrackerLocationDataSource
+import com.esri.arcgisruntime.location.SimulatedLocationDataSource
+import com.esri.arcgisruntime.location.SimulationParameters
 import com.esri.arcgisruntime.mapping.ArcGISMap
 import com.esri.arcgisruntime.mapping.BasemapStyle
+import com.esri.arcgisruntime.mapping.view.Graphic
+import com.esri.arcgisruntime.mapping.view.LocationDisplay
 import com.esri.arcgisruntime.mapping.view.MapView
+import com.esri.arcgisruntime.navigation.DestinationStatus
+import com.esri.arcgisruntime.navigation.RouteTracker
+import com.esri.arcgisruntime.symbology.SimpleLineSymbol
 import com.esri.arcgisruntime.tasks.geocode.GeocodeParameters
 import com.esri.arcgisruntime.tasks.networkanalysis.RouteTask
 import com.gismo.safejourney.databinding.FragmentMapBinding
+import java.util.*
 import java.util.concurrent.ExecutionException
 
 class MapFragment: Fragment() {
@@ -35,6 +46,8 @@ class MapFragment: Fragment() {
     private lateinit var mapContext: Context
 
     private val addressGeocodeParameters = GeocodeParameters()
+
+    var simulateRoute = false
 
 
     override fun onCreateView(
@@ -61,12 +74,15 @@ class MapFragment: Fragment() {
         viewModel.mapView = mapView
         viewModel.routeTask = RouteTask(this.requireContext(), getString(R.string.world_route_url))
 
+
         binding.recenterButton.setOnClickListener { viewModel.recenterLocation() }
 
         viewModel.routeFound.observe(viewLifecycleOwner) {
             if(it) binding.startButton.visibility = View.VISIBLE
             else binding.startButton.visibility = View.GONE
         }
+
+        binding.startButton.setOnClickListener { startNavigation() }
 
         // Set context so it can be accessed in geocoder
         mapContext = this.requireContext()
@@ -210,6 +226,62 @@ class MapFragment: Fragment() {
             }
             viewModel.locatorTask.loadAsync()
         }
+    }
+
+    fun startNavigation() {
+        viewModel.graphicsOverlay.graphics.clear()
+
+        val routeGeometry = viewModel.routeResult?.routes?.get(0)?.routeGeometry
+
+        val routeAheadGraphic = Graphic(
+            routeGeometry,
+            SimpleLineSymbol(SimpleLineSymbol.Style.DASH, Color.parseColor("#2462A0"), 5f)
+        )
+
+        val routeTraveledGraphic = Graphic(
+            routeGeometry,
+            SimpleLineSymbol(SimpleLineSymbol.Style.SOLID, Color.parseColor("#F0544F"), 5f)
+        )
+
+        viewModel.graphicsOverlay.graphics.addAll(listOf(routeAheadGraphic, routeTraveledGraphic))
+
+        // Simulation parameters
+
+
+        val simulationParameters = SimulationParameters(Calendar.getInstance(), 35.0, 5.0, 5.0)
+        val simulatedLocationDataSource = SimulatedLocationDataSource().apply {
+            setLocations(routeGeometry, simulationParameters)
+        }
+
+        val routeTracker = RouteTracker(this.requireContext(), viewModel.routeResult, 0, true).apply {
+            enableReroutingAsync(viewModel.routeTask, viewModel.routeParameters, RouteTracker.ReroutingStrategy.TO_NEXT_WAYPOINT, true)
+            voiceGuidanceUnitSystem = UnitSystem.IMPERIAL
+        }
+
+        val routeTrackerLocationDataSource = RouteTrackerLocationDataSource(routeTracker, simulatedLocationDataSource)
+        mapView.locationDisplay.apply {
+            locationDataSource = routeTrackerLocationDataSource
+            autoPanMode = LocationDisplay.AutoPanMode.NAVIGATION
+        }
+
+        mapView.locationDisplay.addLocationChangedListener {
+            val trackingStatus = routeTracker.trackingStatus
+
+            routeAheadGraphic.geometry = trackingStatus.routeProgress.remainingGeometry
+            routeTraveledGraphic.geometry = trackingStatus.routeProgress.traversedGeometry
+
+            if (trackingStatus.destinationStatus == DestinationStatus.REACHED) {
+                if(routeTracker.trackingStatus.remainingDestinationCount > 1) {
+                    routeTracker.switchToNextDestinationAsync()
+                } else {
+                    simulatedLocationDataSource.stop()
+                    routeTrackerLocationDataSource.stop()
+                }
+            }
+        }
+
+        mapView.locationDisplay.startAsync()
+
     }
 
 

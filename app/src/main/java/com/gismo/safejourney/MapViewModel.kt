@@ -10,6 +10,8 @@ import com.esri.arcgisruntime.ArcGISRuntimeEnvironment
 import com.esri.arcgisruntime.geometry.Point
 import com.esri.arcgisruntime.geometry.SpatialReferences
 import com.esri.arcgisruntime.loadable.LoadStatus
+import com.esri.arcgisruntime.location.SimulatedLocationDataSource
+import com.esri.arcgisruntime.location.SimulationParameters
 import com.esri.arcgisruntime.mapping.ArcGISMap
 import com.esri.arcgisruntime.mapping.BasemapStyle
 import com.esri.arcgisruntime.mapping.Viewpoint
@@ -17,12 +19,16 @@ import com.esri.arcgisruntime.mapping.view.Graphic
 import com.esri.arcgisruntime.mapping.view.GraphicsOverlay
 import com.esri.arcgisruntime.mapping.view.LocationDisplay
 import com.esri.arcgisruntime.mapping.view.MapView
+import com.esri.arcgisruntime.navigation.RouteTracker
 import com.esri.arcgisruntime.symbology.SimpleLineSymbol
 import com.esri.arcgisruntime.symbology.SimpleMarkerSymbol
 import com.esri.arcgisruntime.tasks.geocode.LocatorTask
+import com.esri.arcgisruntime.tasks.networkanalysis.RouteParameters
+import com.esri.arcgisruntime.tasks.networkanalysis.RouteResult
 import com.esri.arcgisruntime.tasks.networkanalysis.RouteTask
 import com.esri.arcgisruntime.tasks.networkanalysis.Stop
 import java.io.File
+import java.util.*
 import java.util.concurrent.ExecutionException
 import kotlin.properties.Delegates
 
@@ -40,10 +46,18 @@ class MapViewModel(): ViewModel() {
         LocatorTask("https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer")
     }
 
+    var routeTask: RouteTask? = null
+
     private var _routeFound = MutableLiveData<Boolean>(false)
     val routeFound: LiveData<Boolean> get() = _routeFound
 
-    private val graphicsOverlay: GraphicsOverlay = GraphicsOverlay()
+    private var _navStarted = MutableLiveData<Boolean>(false)
+    val navStarted: LiveData<Boolean> get() = _navStarted
+
+    val graphicsOverlay: GraphicsOverlay = GraphicsOverlay()
+
+    var routeParameters: RouteParameters? = null
+    var routeResult: RouteResult? = null
 
     var mapView by Delegates.observable<MapView?>(null) { _, oldValue, newValue ->
         // Remove graphics overlays from old map
@@ -58,8 +72,6 @@ class MapViewModel(): ViewModel() {
 
         newValue?.locationDisplay?.startAsync()
     }
-
-    var routeTask: RouteTask? = null
 
     fun findRoute(destination: Point) {
 
@@ -84,7 +96,6 @@ class MapViewModel(): ViewModel() {
                             isReturnDirections = true
                             isReturnStops = true
                             isReturnRoutes = true
-
 
                         } catch (e: Exception) {
                             when (e) {
@@ -117,6 +128,9 @@ class MapViewModel(): ViewModel() {
 
                             graphicsOverlay.graphics.add(routeGraphic)
                             mapView?.setViewpointAsync(Viewpoint(routeGeometry.extent))
+
+                            this.routeResult = routeResult
+                            this.routeParameters = routeParameters
                         } catch (e: Exception) {
                             when (e) {
                                 is InterruptedException, is ExecutionException -> {
@@ -136,6 +150,7 @@ class MapViewModel(): ViewModel() {
         }
 
     }
+
 
     fun recenterLocation() {
         mapView?.locationDisplay?.autoPanMode = LocationDisplay.AutoPanMode.RECENTER
