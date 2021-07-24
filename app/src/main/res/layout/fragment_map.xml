@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    >
 
     <data>
 
@@ -11,7 +13,8 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        tools:background="@color/gismo_grey">
 
         <com.esri.arcgisruntime.mapping.view.MapView
             android:id="@+id/mapView"
@@ -43,7 +46,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="20dp"
-            android:background="@drawable/bg_white_rounded" >
+            android:background="@drawable/bg_white_rounded"
+            app:iconifiedByDefault="false"
+            app:queryHint="Search a destination"
+            app:queryBackground="@color/transparent">
 
         </androidx.appcompat.widget.SearchView>
 
