@@ -1,10 +1,12 @@
 package com.gismo.safejourney
 
+import android.graphics.Color
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.esri.arcgisruntime.ArcGISRuntimeEnvironment
 import com.esri.arcgisruntime.geometry.Point
 import com.esri.arcgisruntime.geometry.SpatialReferences
+import com.esri.arcgisruntime.loadable.LoadStatus
 import com.esri.arcgisruntime.mapping.ArcGISMap
 import com.esri.arcgisruntime.mapping.BasemapStyle
 import com.esri.arcgisruntime.mapping.Viewpoint
@@ -14,7 +16,11 @@ import com.esri.arcgisruntime.mapping.view.LocationDisplay
 import com.esri.arcgisruntime.mapping.view.MapView
 import com.esri.arcgisruntime.symbology.SimpleLineSymbol
 import com.esri.arcgisruntime.symbology.SimpleMarkerSymbol
+import com.esri.arcgisruntime.tasks.geocode.LocatorTask
+import com.esri.arcgisruntime.tasks.networkanalysis.RouteTask
+import com.esri.arcgisruntime.tasks.networkanalysis.Stop
 import java.io.File
+import java.util.concurrent.ExecutionException
 import kotlin.properties.Delegates
 
 class MapViewModel(): ViewModel() {
@@ -25,6 +31,10 @@ class MapViewModel(): ViewModel() {
         ArcGISMap(BasemapStyle.ARCGIS_STREETS).apply {
             loadAsync()
         }
+    }
+
+    val locatorTask: LocatorTask by lazy {
+        LocatorTask("https://geocode-api.arcgis.com/arcgis/rest/services/World/GeocodeServer")
     }
 
     private val graphicsOverlay: GraphicsOverlay = GraphicsOverlay()
@@ -41,6 +51,83 @@ class MapViewModel(): ViewModel() {
         newValue?.setViewpoint(Viewpoint(44.3148, -85.6024, 8000000.0))
 
         newValue?.locationDisplay?.startAsync()
+    }
+
+    var routeTask: RouteTask? = null
+
+    fun findRoute(destination: Point) {
+
+        Log.i(TAG, "Finding route...")
+        Log.i(TAG, "Route task? ${routeTask != null}")
+        routeTask?.loadAsync()
+        routeTask?.addDoneLoadingListener {
+            if(routeTask?.loadStatus == LoadStatus.LOADED) {
+                val routeParametersFuture = routeTask?.createDefaultParametersAsync()
+                Log.i(TAG, "$routeParametersFuture")
+                routeParametersFuture?.addDoneListener {
+                    Log.i(TAG, "1")
+                    routeParametersFuture.get()
+                    // Define route parameters
+                    val routeParameters = routeParametersFuture?.get().apply {
+                        Log.i(TAG, "2")
+                        try {
+                            setStops(
+                                listOf(
+                                    Stop(Point(-85.5396562, 42.8106865)),
+                                    Stop(destination)
+                                )
+                            )
+
+                            isReturnDirections = true
+                            isReturnStops = true
+                            isReturnRoutes = true
+                        } catch (e: Exception) {
+                            when (e) {
+                                is InterruptedException, is ExecutionException -> {
+                                    val error =
+                                        "Error getting the default route parameters: ${e.message}"
+                                    Log.e(TAG, error)
+                                }
+                                else -> throw e
+                            }
+                        }
+                    }
+
+                    val routeResultFuture = routeTask?.solveRouteAsync(routeParameters)
+                    routeResultFuture?.addDoneListener {
+                        try {
+                            val routeResult = routeResultFuture?.get()
+                            val routeGeometry = routeResult.routes[0].routeGeometry
+
+                            val routeGraphic = Graphic(
+                                routeGeometry,
+                                SimpleLineSymbol(
+                                    SimpleLineSymbol.Style.SOLID,
+                                    Color.parseColor("#F0544F"),
+                                    5f
+                                )
+                            )
+
+                            graphicsOverlay.graphics.add(routeGraphic)
+                            mapView?.setViewpointAsync(Viewpoint(routeGeometry.extent))
+                        } catch (e: Exception) {
+                            when (e) {
+                                is InterruptedException, is ExecutionException -> {
+                                    val error = "Error creating the route result: ${e.message}"
+                                    Log.e(TAG, error)
+                                }
+                                else -> throw e
+                            }
+                        }
+                    }
+
+                }
+            } else {
+                Log.e(TAG, "Failed to load route task")
+                Log.e(TAG, "${routeTask?.loadError?.cause}")
+            }
+        }
+
     }
 
     fun recenterLocation() {

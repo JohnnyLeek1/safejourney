@@ -35,6 +35,13 @@
                 android:scaleType="center"
                 app:srcCompat="@drawable/ic_recenter_icon" />
         </RelativeLayout>
+
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/search_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="20dp"
+            android:background="@drawable/bg_white_rounded" />
     </FrameLayout>
 
 
