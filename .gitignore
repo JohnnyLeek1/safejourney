@@ -13,3 +13,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+
+# API KEY
+/app/src/main/java/com/gismo/safejourney/API_KEY

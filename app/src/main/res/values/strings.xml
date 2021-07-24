@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">safejourney</string>
     <string name="how_are_you_travelling_today">How are you travelling today?</string>
+    <string name="location_permissions_denied">Please enable location permissions to use safejourney</string>
 </resources>

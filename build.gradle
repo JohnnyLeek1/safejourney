@@ -20,6 +20,11 @@ allprojects {
         google()
         mavenCentral()
         jcenter() // Warning: this repository is going to shut down soon
+
+        // ArcGIS API Repository
+        maven {
+            url 'https://esri.jfrog.io/artifactory/arcgis'
+        }
     }
 }
 
