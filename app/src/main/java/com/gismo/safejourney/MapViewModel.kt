@@ -54,7 +54,7 @@ class MapViewModel(): ViewModel() {
         newValue?.graphicsOverlays?.add(graphicsOverlay)
 
         Log.i(TAG, "Setting viewpoint")
-        newValue?.setViewpoint(Viewpoint(44.3148, -85.6024, 8000000.0))
+        newValue?.setViewpoint(Viewpoint(38.9072485,-77.0366464, 100000.0))
 
         newValue?.locationDisplay?.startAsync()
     }
@@ -84,6 +84,7 @@ class MapViewModel(): ViewModel() {
                             isReturnDirections = true
                             isReturnStops = true
                             isReturnRoutes = true
+
 
                         } catch (e: Exception) {
                             when (e) {
