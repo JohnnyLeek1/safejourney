@@ -14,7 +14,7 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:background="@color/gismo_grey">
+        tools:background="@color/gismo_green">
 
         <com.esri.arcgisruntime.mapping.view.MapView
             android:id="@+id/mapView"
@@ -41,17 +41,35 @@
                 app:srcCompat="@drawable/ic_recenter_icon" />
         </RelativeLayout>
 
-        <androidx.appcompat.widget.SearchView
-            android:id="@+id/search_bar"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="20dp"
-            android:background="@drawable/bg_white_rounded"
-            app:iconifiedByDefault="false"
-            app:queryHint="Search a destination"
-            app:queryBackground="@color/transparent">
+            android:layout_margin="10dp"
+            android:background="@drawable/bg_white_rounded">
 
-        </androidx.appcompat.widget.SearchView>
+            <androidx.appcompat.widget.SearchView
+                android:id="@+id/search_bar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:iconifiedByDefault="false"
+                app:queryBackground="@color/transparent"
+                app:queryHint="Search a destination">
+
+            </androidx.appcompat.widget.SearchView>
+
+            <ImageView
+                android:id="@+id/time_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toEndOf="@id/search_bar"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintBottom_toBottomOf="@id/search_bar"
+                android:src="@drawable/ic_baseline_clock"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
         <RelativeLayout
             android:layout_width="match_parent"
