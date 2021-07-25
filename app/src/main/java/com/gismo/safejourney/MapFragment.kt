@@ -102,6 +102,10 @@ class MapFragment: Fragment() {
         viewModel.routeTask = RouteTask(this.requireContext(), getString(R.string.world_route_url))
 
 
+        binding.timeButton.setOnClickListener {
+            TimeSelectDialogFragment().show(childFragmentManager, TimeSelectDialogFragment.TAG)
+        }
+
         binding.recenterButton.setOnClickListener { viewModel.recenterLocation() }
 
         viewModel.routeFound.observe(viewLifecycleOwner) {

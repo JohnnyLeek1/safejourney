@@ -3,18 +3,18 @@
     <item android:state_checked="true" android:state_window_focused="false"
         android:drawable="@drawable/ic_baseline_directions_walk_blue" />
     <item android:state_checked="false" android:state_window_focused="false"
-        android:drawable="@drawable/ic_baseline_directions_walk_white" />
+        android:drawable="@drawable/ic_baseline_directions_walk_grey" />
 
     <item android:state_checked="true" android:state_pressed="true"
         android:drawable="@drawable/ic_baseline_directions_walk_blue" />
     <item android:state_checked="false" android:state_pressed="true"
-        android:drawable="@drawable/ic_baseline_directions_walk_white" />
+        android:drawable="@drawable/ic_baseline_directions_walk_grey" />
 
     <item android:state_checked="true" android:state_focused="true"
         android:drawable="@drawable/ic_baseline_directions_walk_blue" />
     <item android:state_checked="false" android:state_focused="true"
-        android:drawable="@drawable/ic_baseline_directions_walk_white" />
+        android:drawable="@drawable/ic_baseline_directions_walk_grey" />
 
-    <item android:state_checked="false" android:drawable="@drawable/ic_baseline_directions_walk_white" />
+    <item android:state_checked="false" android:drawable="@drawable/ic_baseline_directions_walk_grey" />
     <item android:state_checked="true" android:drawable="@drawable/ic_baseline_directions_walk_blue" />
 </selector>
