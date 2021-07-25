@@ -106,6 +106,7 @@
                 android:fontFamily="@font/poppins_bold"
                 android:textColor="@color/white"
                 android:textSize="24dp"
+                android:text="Calculating..."
                 app:layout_constraintStart_toEndOf="@+id/roadIcon"
                 app:layout_constraintTop_toTopOf="parent"
                 tools:text="500ft" />

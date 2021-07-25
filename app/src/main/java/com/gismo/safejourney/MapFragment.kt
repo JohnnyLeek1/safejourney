@@ -4,8 +4,10 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.database.MatrixCursor
 import android.graphics.Color
+import android.os.Build
 import android.os.Bundle
 import android.provider.BaseColumns
+import android.speech.tts.TextToSpeech
 import android.text.format.DateUtils
 import android.util.Log
 import android.view.LayoutInflater
@@ -68,6 +70,9 @@ class MapFragment: Fragment() {
     private lateinit var roadDistance: TextView
     private lateinit var roadIcon: ImageView
 
+    private lateinit var textToSpeech: TextToSpeech
+    private var lastVoiceGuidance: String = ""
+
 
     var simulateRoute = false
 
@@ -124,6 +129,14 @@ class MapFragment: Fragment() {
         roadName = binding.roadName
         roadDistance = binding.roadDistance
         roadIcon = binding.roadIcon
+
+        textToSpeech = TextToSpeech(this.requireContext()) { status ->
+            if (status != TextToSpeech.ERROR) {
+                textToSpeech.language = Locale.US
+            } else {
+                Log.e(TAG, "Failed to initialize text to speech")
+            }
+        }
 
 
         return binding.root
@@ -275,6 +288,8 @@ class MapFragment: Fragment() {
 
         val routeGeometry = viewModel.routeResult?.routes?.get(0)?.routeGeometry
 
+        speakVoiceGuidance("Starting route")
+
         val routeAheadGraphic = Graphic(
             routeGeometry,
             SimpleLineSymbol(SimpleLineSymbol.Style.DASH, Color.parseColor("#2462A0"), 5f)
@@ -320,6 +335,8 @@ class MapFragment: Fragment() {
             routeTracker.addNewVoiceGuidanceListener {
                 roadName.text = parseRoadName(it.voiceGuidance.text)
                 roadIcon.setImageResource(parseIconDirection(it.voiceGuidance.text))
+
+                speakVoiceGuidance(it.voiceGuidance.text)
             }
 
             if (trackingStatus.destinationStatus == DestinationStatus.REACHED) {
@@ -368,7 +385,7 @@ class MapFragment: Fragment() {
             return directions[0] + ' ' + directions[1] + ' ' + directions[2]
         }
 
-        return "Pennsylvania Ave, NW"
+        return "Calculating..."
     }
 
     /**
@@ -392,6 +409,20 @@ class MapFragment: Fragment() {
         }
 
         return R.drawable.ic_up_arrow
+    }
+
+    /**
+     * Speak a string from Text to Speech service
+     */
+    private fun speakVoiceGuidance(text: String) {
+        if(!textToSpeech.isSpeaking && text != lastVoiceGuidance) {
+            // Prevent repeat instructions
+            lastVoiceGuidance = text
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
+                textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null, null)
+            else
+                textToSpeech.speak(text, TextToSpeech.QUEUE_FLUSH, null)
+        }
     }
 
 
