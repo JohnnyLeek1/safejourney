@@ -22,17 +22,12 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.cursoradapter.widget.SimpleCursorAdapter
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
-import com.esri.arcgisruntime.ArcGISRuntimeEnvironment
 import com.esri.arcgisruntime.UnitSystem
 import com.esri.arcgisruntime.loadable.LoadStatus
 import com.esri.arcgisruntime.location.RouteTrackerLocationDataSource
 import com.esri.arcgisruntime.location.SimulatedLocationDataSource
 import com.esri.arcgisruntime.location.SimulationParameters
-import com.esri.arcgisruntime.mapping.ArcGISMap
-import com.esri.arcgisruntime.mapping.BasemapStyle
 import com.esri.arcgisruntime.mapping.view.Graphic
 import com.esri.arcgisruntime.mapping.view.LocationDisplay
 import com.esri.arcgisruntime.mapping.view.MapView
@@ -336,7 +331,9 @@ class MapFragment: Fragment() {
             distanceRemainingValue.text = "${remainingDistance.displayText} ${remainingDistance.displayTextUnits.abbreviation}"
             roadDistance.text = "${trackingStatus.maneuverProgress.remainingDistance.displayText} ${trackingStatus.maneuverProgress.remainingDistance.displayTextUnits.abbreviation}"
 
+
             routeTracker.addNewVoiceGuidanceListener {
+
                 roadName.text = parseRoadName(it.voiceGuidance.text)
                 roadIcon.setImageResource(parseIconDirection(it.voiceGuidance.text))
 
@@ -371,6 +368,12 @@ class MapFragment: Fragment() {
         if(direction == "Turn left") return direction
         else if(direction == "Turn right") return direction
 
+        // Roundabout & highways
+        else if("exit" in direction) {
+            var directions = direction.split("the")
+            return directions[directions.size - 1]
+        }
+
         // For directions like: "Turn right on East Street Northwest" or
         // "Turn left through the Park on East Street Northwest"
         else if("on" in direction && "destination is" !in direction && "on your" !in direction) {
@@ -390,30 +393,29 @@ class MapFragment: Fragment() {
         }
 
         return "Calculating..."
+
+
     }
+
+//    private fun parseRoadName(direction: String): String =
+//        when {
+//            direction == "Turn left" -> direction
+//            direction == "Turn right" -> direction
+//            "exit" in direction -> direction.split("the").last()
+//        }
+
 
     /**
      * Determines which icon to display based off direction string
      */
-    private fun parseIconDirection(direction: String): Int {
-        if("arrived" in direction) {
-            return R.drawable.ic_finish_location
+    private fun parseIconDirection(direction: String): Int =
+        when {
+            "arrived" in direction -> R.drawable.ic_finish_location
+            "U turn" in direction -> R.drawable.ic_down_arrow
+            "left" in direction -> R.drawable.ic_left_arrow
+            "right" in direction -> R.drawable.ic_right_arrow
+            else -> R.drawable.ic_up_arrow
         }
-
-        else if("U turn" in direction) {
-            return R.drawable.ic_down_arrow
-        }
-
-        else if("left" in direction) {
-            return R.drawable.ic_left_arrow
-        }
-
-        else if("right" in direction) {
-            return R.drawable.ic_right_arrow
-        }
-
-        return R.drawable.ic_up_arrow
-    }
 
     /**
      * Speak a string from Text to Speech service

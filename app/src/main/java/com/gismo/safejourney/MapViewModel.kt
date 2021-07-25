@@ -12,6 +12,7 @@ import com.esri.arcgisruntime.data.FeatureQueryResult
 import com.esri.arcgisruntime.data.QueryParameters
 import com.esri.arcgisruntime.data.ServiceFeatureTable
 import com.esri.arcgisruntime.geometry.Point
+import com.esri.arcgisruntime.geometry.Polygon
 import com.esri.arcgisruntime.geometry.SpatialReferences
 import com.esri.arcgisruntime.layers.FeatureLayer
 import com.esri.arcgisruntime.loadable.LoadStatus
@@ -60,11 +61,17 @@ class MapViewModel(): ViewModel() {
     var routeParameters: RouteParameters? = null
     var routeResult: RouteResult? = null
 
-    // Barriers
-    private var points: MutableList<PointBarrier> = mutableListOf<PointBarrier>()
+    // Barrier Layer
+    private val barrierList by lazy { mutableListOf<PointBarrier>() }
     private val serviceFeatureTable: ServiceFeatureTable by lazy {
+        ServiceFeatureTable("https://services.arcgis.com/hRUr1F8lE8Jq2uJo/arcgis/rest/services/StreetPts/FeatureServer/0")
+    }
+
+    // Polygon layer
+    private val polygonFeatureTable: ServiceFeatureTable by lazy {
         ServiceFeatureTable("https://services.arcgis.com/hRUr1F8lE8Jq2uJo/arcgis/rest/services/CSO_Mer_Buf20m/FeatureServer/0")
     }
+
 
 
     var mapView by Delegates.observable<MapView?>(null) { _, oldValue, newValue ->
@@ -83,11 +90,30 @@ class MapViewModel(): ViewModel() {
 
     fun findRoute(destination: Point) {
 
+        Log.i(TAG, "Initializing barriers")
+        for(i in 1 until barrierList.size) {
+            barrierList[i].barrierId = i
+            barrierList[i].type = BarrierType.COST_ADJUSTMENT
+            barrierList[i].setAddedCost("Minutes", 100.0)
+        }
+
+        for(barrier in barrierList) {
+            Log.i(TAG, "{${barrier.barrierId}")
+            Log.i(TAG, "${barrier.type}")
+        }
+
+
         Log.i(TAG, "Finding route...")
         routeTask?.loadAsync()
         routeTask?.addDoneLoadingListener {
             if(routeTask?.loadStatus == LoadStatus.LOADED) {
-                val routeParametersFuture = routeTask?.createDefaultParametersAsync()
+                val info = routeTask?.routeTaskInfo?.costAttributes
+                if (info != null) {
+                    for(attribute in info) {
+                        Log.i(TAG, "${attribute.key}")
+                    }
+                }
+            val routeParametersFuture = routeTask?.createDefaultParametersAsync()
                 Log.i(TAG, "$routeParametersFuture")
                 routeParametersFuture?.addDoneListener {
                     routeParametersFuture.get()
@@ -105,10 +131,7 @@ class MapViewModel(): ViewModel() {
                             isReturnStops = true
                             isReturnRoutes = true
 
-                            val queryParams = QueryParameters()
-
-                            queryParams.whereClause = "OBJECTID >= 0"
-                            //setPolygonBarriers(serviceFeatureTable, queryParams)
+                            setPointBarriers(barrierList)
 
 
                         } catch (e: Exception) {
@@ -122,6 +145,8 @@ class MapViewModel(): ViewModel() {
                             }
                         }
                     }
+
+
 
                     val routeResultFuture = routeTask?.solveRouteAsync(routeParameters)
                     routeResultFuture?.addDoneListener {
@@ -176,11 +201,33 @@ class MapViewModel(): ViewModel() {
         val apiKey: String = ApiKey.KEY
         Log.i(TAG, "Initializing environment with API Key: $apiKey")
         ArcGISRuntimeEnvironment.setApiKey(apiKey)
-        Log.i(TAG, "Loading feature service")
 
-        val featureLayer = FeatureLayer(serviceFeatureTable)
+        Log.i(TAG, "Loading barrier service")
+        val query = QueryParameters()
+        query.whereClause = "OBJECTID >= 0"
 
-        map.operationalLayers.add(featureLayer)
+        val future: ListenableFuture<FeatureQueryResult> = serviceFeatureTable.queryFeaturesAsync(query)
+        future.addDoneListener {
+            try {
+                val result = future.get()
+                val resultIterator = result.iterator()
+                while(resultIterator.hasNext()) {
+                    resultIterator.next().run {
+                        if(this.geometry.geometryType.name == "POINT") {
+                            barrierList.add(PointBarrier(this.geometry as Point))
+                        }
+                    }
+                }
+            } catch(e: Exception) {
+                Log.e(TAG, "nards")
+                Log.e(TAG, "${e.message}")
+            }
+        }
+
+        Log.i(TAG, "Loading polygon service")
+//        val featureLayer = FeatureLayer(polygonFeatureTable)
+//        map.operationalLayers.add(featureLayer)
+
 
         val currentTime = Calendar.getInstance()
         var nightTime = Calendar.getInstance()
