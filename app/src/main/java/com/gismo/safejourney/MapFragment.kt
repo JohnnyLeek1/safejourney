@@ -103,7 +103,7 @@ class MapFragment: Fragment() {
 
 
         binding.timeButton.setOnClickListener {
-            TimeSelectDialogFragment().show(childFragmentManager, TimeSelectDialogFragment.TAG)
+            TimeSelectDialogFragment(arguments?.get("isWalking") as Boolean).show(childFragmentManager, TimeSelectDialogFragment.TAG)
         }
 
         binding.recenterButton.setOnClickListener { viewModel.recenterLocation() }
@@ -395,25 +395,15 @@ class MapFragment: Fragment() {
     /**
      * Determines which icon to display based off direction string
      */
-    private fun parseIconDirection(direction: String): Int {
-        if("arrived" in direction) {
-            return R.drawable.ic_finish_location
+    private fun parseIconDirection(direction: String): Int =
+        when {
+            "arrived" in direction -> R.drawable.ic_finish_location
+            "U turn" in direction -> R.drawable.ic_down_arrow
+            "left" in direction -> R.drawable.ic_left_arrow
+            "right" in direction -> R.drawable.ic_right_arrow
+            else -> R.drawable.ic_up_arrow
         }
 
-        else if("U turn" in direction) {
-            return R.drawable.ic_down_arrow
-        }
-
-        else if("left" in direction) {
-            return R.drawable.ic_left_arrow
-        }
-
-        else if("right" in direction) {
-            return R.drawable.ic_right_arrow
-        }
-
-        return R.drawable.ic_up_arrow
-    }
 
     /**
      * Speak a string from Text to Speech service
