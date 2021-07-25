@@ -18,6 +18,7 @@ import com.esri.arcgisruntime.loadable.LoadStatus
 import com.esri.arcgisruntime.location.SimulatedLocationDataSource
 import com.esri.arcgisruntime.location.SimulationParameters
 import com.esri.arcgisruntime.mapping.ArcGISMap
+import com.esri.arcgisruntime.mapping.Basemap
 import com.esri.arcgisruntime.mapping.BasemapStyle
 import com.esri.arcgisruntime.mapping.Viewpoint
 import com.esri.arcgisruntime.mapping.view.Graphic
@@ -39,7 +40,7 @@ class MapViewModel(): ViewModel() {
     private val TAG: String = "MapViewModel"
 
     private val map: ArcGISMap by lazy {
-        ArcGISMap(BasemapStyle.ARCGIS_STREETS)
+        ArcGISMap(BasemapStyle.ARCGIS_LIGHT_GRAY)
     }
 
     val locatorTask: LocatorTask by lazy {
@@ -62,7 +63,7 @@ class MapViewModel(): ViewModel() {
     // Barriers
     private var points: MutableList<PointBarrier> = mutableListOf<PointBarrier>()
     private val serviceFeatureTable: ServiceFeatureTable by lazy {
-        ServiceFeatureTable("https://services.arcgis.com/hRUr1F8lE8Jq2uJo/arcgis/rest/services/StTestPts/FeatureServer/0")
+        ServiceFeatureTable("https://services.arcgis.com/hRUr1F8lE8Jq2uJo/arcgis/rest/services/CSO_Mer_Buf20m/FeatureServer/0")
     }
 
 
@@ -107,7 +108,7 @@ class MapViewModel(): ViewModel() {
                             val queryParams = QueryParameters()
 
                             queryParams.whereClause = "OBJECTID >= 0"
-                            setPointBarriers(serviceFeatureTable, queryParams)
+                            //setPolygonBarriers(serviceFeatureTable, queryParams)
 
 
                         } catch (e: Exception) {
@@ -179,31 +180,16 @@ class MapViewModel(): ViewModel() {
 
         val featureLayer = FeatureLayer(serviceFeatureTable)
 
-        // Query for all barriers
-        val query = QueryParameters()
-
-        query.whereClause = "OBJECTID > 0"
-
-        val future: ListenableFuture<FeatureQueryResult> = serviceFeatureTable.queryFeaturesAsync(query)
-        future.addDoneListener {
-            try {
-                val result = future.get()
-
-                val resultIterator = result.iterator()
-                if(resultIterator.hasNext()) {
-                    resultIterator.next().run {
-                        Log.i(TAG, "Adding point ${geometry.isEmpty}")
-                        points.add(PointBarrier(geometry as Point))
-                    }
-                }
-            } catch(e: Exception) {
-                Log.e(TAG, "Error adding points ${e.message}")
-            }
-        }
-
-
-
         map.operationalLayers.add(featureLayer)
+
+        val currentTime = Calendar.getInstance()
+        var nightTime = Calendar.getInstance()
+        nightTime[Calendar.HOUR_OF_DAY] = 18
+        nightTime[Calendar.MINUTE] = 0
+
+        if(currentTime >= nightTime)
+            map.basemap = Basemap.createDarkGrayCanvasVector()
+
     }
 
     override fun onCleared() {

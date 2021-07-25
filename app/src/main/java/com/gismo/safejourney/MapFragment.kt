@@ -6,15 +6,22 @@ import android.database.MatrixCursor
 import android.graphics.Color
 import android.os.Bundle
 import android.provider.BaseColumns
+import android.text.format.DateUtils
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.SearchView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.content.ContextCompat
 import androidx.cursoradapter.widget.SimpleCursorAdapter
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModelProvider
 import com.esri.arcgisruntime.ArcGISRuntimeEnvironment
 import com.esri.arcgisruntime.UnitSystem
@@ -29,6 +36,7 @@ import com.esri.arcgisruntime.mapping.view.LocationDisplay
 import com.esri.arcgisruntime.mapping.view.MapView
 import com.esri.arcgisruntime.navigation.DestinationStatus
 import com.esri.arcgisruntime.navigation.RouteTracker
+import com.esri.arcgisruntime.navigation.TrackingStatus
 import com.esri.arcgisruntime.symbology.SimpleLineSymbol
 import com.esri.arcgisruntime.tasks.geocode.GeocodeParameters
 import com.esri.arcgisruntime.tasks.networkanalysis.RouteTask
@@ -42,10 +50,24 @@ class MapFragment: Fragment() {
     private lateinit var mapView: MapView
     private lateinit var viewModel: MapViewModel
 
+    private lateinit var startButton: Button
+    private lateinit var searchContainer: ConstraintLayout
     private lateinit var searchBar: SearchView
     private lateinit var mapContext: Context
 
     private val addressGeocodeParameters = GeocodeParameters()
+
+    // Navigation bar
+    private lateinit var navigationBar: ConstraintLayout
+    private lateinit var timeRemainingValue: TextView
+    private lateinit var distanceRemainingValue: TextView
+
+    // Direction panel
+    private lateinit var directionsPanel: ConstraintLayout
+    private lateinit var roadName: TextView
+    private lateinit var roadDistance: TextView
+    private lateinit var roadIcon: ImageView
+
 
     var simulateRoute = false
 
@@ -82,13 +104,27 @@ class MapFragment: Fragment() {
             else binding.startButton.visibility = View.GONE
         }
 
+        startButton = binding.startButton
         binding.startButton.setOnClickListener { startNavigation() }
 
         // Set context so it can be accessed in geocoder
         mapContext = this.requireContext()
+        searchContainer = binding.searchContainer
         searchBar = binding.searchBar
 
         setupAddressSearchBar()
+
+        // Navigation bar
+        navigationBar = binding.navigationBar
+        timeRemainingValue = binding.timeRemainingValue
+        distanceRemainingValue = binding.distanceRemainingValue
+
+        // Direction Panel
+        directionsPanel = binding.directionsPanel
+        roadName = binding.roadName
+        roadDistance = binding.roadDistance
+        roadIcon = binding.roadIcon
+
 
         return binding.root
     }
@@ -228,8 +264,14 @@ class MapFragment: Fragment() {
         }
     }
 
-    fun startNavigation() {
+    private fun startNavigation() {
         viewModel.graphicsOverlay.graphics.clear()
+
+        startButton.visibility = View.GONE
+        searchContainer.visibility = View.GONE
+
+        navigationBar.visibility = View.VISIBLE
+        directionsPanel.visibility = View.VISIBLE
 
         val routeGeometry = viewModel.routeResult?.routes?.get(0)?.routeGeometry
 
@@ -246,8 +288,6 @@ class MapFragment: Fragment() {
         viewModel.graphicsOverlay.graphics.addAll(listOf(routeAheadGraphic, routeTraveledGraphic))
 
         // Simulation parameters
-
-
         val simulationParameters = SimulationParameters(Calendar.getInstance(), 35.0, 5.0, 5.0)
         val simulatedLocationDataSource = SimulatedLocationDataSource().apply {
             setLocations(routeGeometry, simulationParameters)
@@ -270,6 +310,18 @@ class MapFragment: Fragment() {
             routeAheadGraphic.geometry = trackingStatus.routeProgress.remainingGeometry
             routeTraveledGraphic.geometry = trackingStatus.routeProgress.traversedGeometry
 
+            // Get remaining distance info
+            val remainingDistance: TrackingStatus.Distance = trackingStatus.destinationProgress.remainingDistance
+
+            timeRemainingValue.text = DateUtils.formatElapsedTime((trackingStatus.destinationProgress.remainingTime * 60).toLong())
+            distanceRemainingValue.text = "${remainingDistance.displayText} ${remainingDistance.displayTextUnits.abbreviation}"
+            roadDistance.text = "${trackingStatus.maneuverProgress.remainingDistance.displayText} ${trackingStatus.maneuverProgress.remainingDistance.displayTextUnits.abbreviation}"
+
+            routeTracker.addNewVoiceGuidanceListener {
+                roadName.text = parseRoadName(it.voiceGuidance.text)
+                roadIcon.setImageResource(parseIconDirection(it.voiceGuidance.text))
+            }
+
             if (trackingStatus.destinationStatus == DestinationStatus.REACHED) {
                 if(routeTracker.trackingStatus.remainingDestinationCount > 1) {
                     routeTracker.switchToNextDestinationAsync()
@@ -282,6 +334,64 @@ class MapFragment: Fragment() {
 
         mapView.locationDisplay.startAsync()
 
+    }
+
+    /**
+     * Human readability processing methods
+     */
+
+
+    /**
+     * Parse road name from string
+     */
+    private fun parseRoadName(direction: String): String {
+        Log.i(TAG, direction)
+        // Simple, "Turn Left", "Turn Right"
+        if(direction == "Turn left") return direction
+        else if(direction == "Turn right") return direction
+
+        // For directions like: "Turn right on East Street Northwest" or
+        // "Turn left through the Park on East Street Northwest"
+        else if("on" in direction && "destination is" !in direction && "on your" !in direction) {
+            var directions = direction.split("on ")
+            return directions[directions.size - 1]
+        }
+        // For "make a u-turn directions"
+        else if("Make a" in direction) {
+            var directions = direction.split(',')
+            return directions[0]
+        }
+
+        // For "you have arrived"
+        else if("You have arrived" in direction) {
+            var directions = direction.split(' ')
+            return directions[0] + ' ' + directions[1] + ' ' + directions[2]
+        }
+
+        return "Pennsylvania Ave, NW"
+    }
+
+    /**
+     * Determines which icon to display based off direction string
+     */
+    private fun parseIconDirection(direction: String): Int {
+        if("arrived" in direction) {
+            return R.drawable.ic_finish_location
+        }
+
+        else if("U turn" in direction) {
+            return R.drawable.ic_down_arrow
+        }
+
+        else if("left" in direction) {
+            return R.drawable.ic_left_arrow
+        }
+
+        else if("right" in direction) {
+            return R.drawable.ic_right_arrow
+        }
+
+        return R.drawable.ic_up_arrow
     }
 
 

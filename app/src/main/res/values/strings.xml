@@ -5,4 +5,7 @@
     <string name="world_route_url">https://route-api.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World</string>
     <string name="made_by_gismo">Made with ❤️ by <i>gismo</i></string>
     <string name="start_button_text">Start Route</string>
+    <string name="time_remaining">Time Remaining</string>
+    <string name="distance_remaining">Distance Remaining</string>
+    <string name="end_route">End</string>
 </resources>

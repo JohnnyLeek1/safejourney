@@ -9,6 +9,8 @@
         <variable
             name="viewModel"
             type="com.gismo.safejourney.MapViewModel" />
+
+
     </data>
 
     <FrameLayout
@@ -26,8 +28,8 @@
         <RelativeLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="16dp"
-            >
+            android:layout_marginBottom="75dp"
+            android:padding="16dp">
 
             <ImageView
                 android:id="@+id/recenterButton"
@@ -42,6 +44,7 @@
         </RelativeLayout>
 
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/searchContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
@@ -71,10 +74,69 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/directionsPanel"
+            android:layout_width="match_parent"
+            android:layout_height="120dp"
+            android:layout_marginTop="50dp"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:background="@drawable/bg_blue_rounded"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <ImageView
+                android:id="@+id/roadIcon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginStart="16dp"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_up_arrow"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/roadDistance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="16dp"
+                android:fontFamily="@font/poppins_bold"
+                android:textColor="@color/white"
+                android:textSize="24dp"
+                app:layout_constraintStart_toEndOf="@+id/roadIcon"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="500ft" />
+
+
+            <TextView
+                android:id="@+id/roadName"
+                android:layout_width="300dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginBottom="24dp"
+                android:autoSizeMaxTextSize="100dp"
+                android:autoSizeMinTextSize="20dp"
+                android:autoSizeStepGranularity="2sp"
+                android:autoSizeTextType="uniform"
+                android:fontFamily="@font/poppins_light"
+                android:textColor="@color/white"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/roadIcon"
+
+                app:layout_constraintTop_toBottomOf="@+id/roadDistance"
+                tools:text="Pennsylvania Avenue SW" />
+
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="16dp"
+            android:layout_marginBottom="50dp"
             >
 
             <Button
@@ -86,7 +148,7 @@
                 android:layout_marginStart="30dp"
                 android:layout_marginTop="30dp"
                 android:layout_marginEnd="30dp"
-                android:layout_marginBottom="30dp"
+                android:layout_marginBottom="50dp"
                 android:backgroundTint="#00A9A5"
                 android:drawableEnd="@drawable/ic_start_arrow"
                 android:insetTop="0dp"
@@ -96,6 +158,78 @@
                 app:cornerRadius="30dp" />
 
         </RelativeLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/navigationBar"
+            android:layout_width="match_parent"
+            android:layout_height="75dp"
+            android:layout_gravity="bottom"
+            android:background="#FDFDFD"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+
+            <TextView
+                android:id="@+id/timeRemainingValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="8dp"
+                android:fontFamily="@font/roboto_bold"
+                android:textSize="30dp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="03:15" />
+
+            <TextView
+                android:id="@+id/timeRemainingText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginBottom="4dp"
+                android:text="@string/time_remaining"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/timeRemainingValue" />
+
+            <TextView
+                android:id="@+id/distanceRemainingValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="55dp"
+                android:layout_marginTop="8dp"
+                android:fontFamily="@font/roboto_bold"
+                android:textSize="30dp"
+                android:textStyle="bold"
+                app:layout_constraintStart_toEndOf="@+id/timeRemainingValue"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="0.6 Mi" />
+
+            <TextView
+                android:id="@+id/distanceRemainingText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="30dp"
+                android:layout_marginBottom="4dp"
+                android:text="@string/distance_remaining"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/timeRemainingText"
+                app:layout_constraintTop_toBottomOf="@+id/distanceRemainingValue" />
+
+            <Button
+                android:id="@+id/stopButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:backgroundTint="@color/gismo_red"
+                android:text="@string/end_route"
+                app:cornerRadius="10dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </FrameLayout>
 
 
