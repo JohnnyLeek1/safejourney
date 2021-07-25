@@ -24,6 +24,10 @@
         android:label="@string/app_name"
         tools:layout="@layout/fragment_map">
 
+        <argument
+            android:name="isWalking"
+            app:argType="boolean"/>
+
     </fragment>
 
 

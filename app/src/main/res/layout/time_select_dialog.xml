@@ -10,16 +10,19 @@
     android:padding="10dp">
 
     <RadioGroup
+        android:id="@+id/walkBikeRadioGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:orientation="horizontal">
         <RadioButton
+            android:id="@+id/bikeRadio"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:button="@null"
             android:background="@drawable/bike_button_selector"/>
         <RadioButton
+            android:id="@+id/walkRadio"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:button="@null"

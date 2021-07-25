@@ -98,7 +98,7 @@ class MapFragment: Fragment() {
 
 
         binding.timeButton.setOnClickListener {
-            TimeSelectDialogFragment().show(childFragmentManager, TimeSelectDialogFragment.TAG)
+            TimeSelectDialogFragment(arguments?.get("isWalking") as Boolean).show(childFragmentManager, TimeSelectDialogFragment.TAG)
         }
 
         binding.recenterButton.setOnClickListener { viewModel.recenterLocation() }
@@ -416,6 +416,7 @@ class MapFragment: Fragment() {
             "right" in direction -> R.drawable.ic_right_arrow
             else -> R.drawable.ic_up_arrow
         }
+
 
     /**
      * Speak a string from Text to Speech service

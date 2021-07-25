@@ -20,12 +20,12 @@ class HomeFragment: Fragment() {
 
         binding.startBikeJourney.setOnClickListener {
             binding.startBikeJourney.setBackgroundResource(R.drawable.ic_circle_shadow)
-            findNavController().navigate(HomeFragmentDirections.startNavAction())
+            findNavController().navigate(HomeFragmentDirections.startNavAction(false))
         }
 
         binding.startWalkJourney.setOnClickListener {
             binding.startWalkJourney.setBackgroundResource(R.drawable.ic_circle_shadow)
-            findNavController().navigate(HomeFragmentDirections.startNavAction())
+            findNavController().navigate(HomeFragmentDirections.startNavAction(true))
         }
 
         return binding.root
